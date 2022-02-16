@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Suggest a movie</title>
     <link rel="apple-touch-icon" href="/img/apple-touch-icon.png">
-    <link rel="icon" type="image/x-icon" href="/img/favicon-32x32.png">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
     <link rel="stylesheet" href="./css/main.css">
     <link rel="stylesheet" href="https://unicons.iconscout.com/release/v4.0.0/css/line.css">
 </head>
@@ -14,7 +14,7 @@
     <header>
         <div class="header header__container container">
             <h1>
-                <img src="./img/apple-touch-icon.png" class="header__logo" alt="">
+                <a href="/"><img src="./img/apple-touch-icon.png" class="header__logo" alt=""></a>
             </h1>
             <div class="tmdb__logo" >
                 <img src="./img/tmdb-logo.svg" alt="">
@@ -23,13 +23,18 @@
     </header>
     <main>
         <div class="container search__container">
-            
             <div class="search__content">
                 <h2 class="title">Hey! Welcome to Suggesta.</h2>
                 <h3 class="subtitle">Suggesta will search through the Movie Database to find the movie you need. It will also recommend similar movies.</h3>
                 <p>Enter a movie name or a part of it, and hit the search button.</p>
-                <input class="searchbar" type="search">
-                <button class="search__button"><i class="uil uil-search search__icon"></i></button>
+                <form >
+                    <input class="searchbar" type="search">
+                </form>
+                <button class="search__button">
+                    <a href="/results.html">
+                        <i class="uil uil-search search__icon"></i>
+                    </a>
+                </button>
             </div>
         </div>
     </main>

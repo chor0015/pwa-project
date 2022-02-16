@@ -114,6 +114,7 @@ button:hover,
 
 .title {
 margin-bottom: var(--mb-2);
+text-align: center;
 }
 
 .subtitle {
@@ -174,6 +175,10 @@ input[type="search"]::-webkit-search-results-decoration {
 .search__content p {
     margin-bottom: var(--mb-2);
     text-align: center;
+}
+
+form {
+    width: 100%;
 }
 
 input {
