@@ -1,0 +1,202 @@
+:root {
+    --header-height: 3rem;
+
+    /*========== Colors ==========*/
+    /* Change favorite color */
+    --hue-color: 250; /*Purple 250 - Green 142 - Blue 230 - Pink 340*/
+
+    /* HSL color mode */
+    --first-color: hsl(var(--hue-color), 69%, 61%);
+    --first-color-second: hsl(var(--hue-color), 69%, 61%);
+    --first-color-alt: hsl(var(--hue-color), 57%, 53%);
+    --first-color-lighter: hsl(var(--hue-color), 92%, 85%);
+    --title-color: hsl(var(--hue-color), 8%, 15%);
+    --text-color: hsl(var(--hue-color), 8%, 45%);
+    --text-color-light: hsl(var(--hue-color), 8%, 65%);
+    --input-color: hsl(var(--hue-color), 70%, 96%);
+    --body-color: hsl(var(--hue-color), 60%, 99%);
+    --container-color: #fff;
+
+    /*========== Font and typography ==========*/
+    --body-font: 'Poppins', sans-serif;
+
+    /* .5rem = 8px, 1rem = 16px, 1.5rem = 24px ... */
+    --big-font-size: 2rem;
+    --h1-font-size: 1.728rem;
+    --h2-font-size: 1.44rem;
+    --h3-font-size: 1.2rem;
+    --normal-font-size: 1rem;
+    --small-font-size: 0.833rem;
+    --smaller-font-size: 0.694rem;
+
+    /*========== Font weight ==========*/
+    --font-medium: 500;
+    --font-semi-bold: 600;
+
+    /*========== Margin Bottom ==========*/
+    /* .25rem = 4px, .5rem = 8px, .75rem = 12px ... */
+    --mb-0-25: 0.25rem;
+    --mb-0-5: 0.5rem;
+    --mb-0-75: 0.75rem;
+    --mb-1: 1rem;
+    --mb-1-5: 1.5rem;
+    --mb-2: 2rem;
+    --mb-2-5: 2.5rem;
+    --mb-3: 3rem;
+
+    /*========== z index ==========*/
+    --z-tooltip: 10;
+    --z-fixed: 100;
+    --z-modal: 1000;
+}
+
+/* Font size for large devices */
+@media screen and (min-width: 968px) {
+    :root {
+        --big-font-size: 3.052rem;
+        --h1-font-size: 2.441rem;
+        --h2-font-size: 1.953rem;
+        --h3-font-size: 1.563rem;
+        --normal-font-size: 1.25rem;
+        --small-font-size: 1rem;
+        --smaller-font-size: 0.8rem;
+    }
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    margin: 0 0 var(--header-height) 0;
+    font-family: var(--body-font);
+    font-size: var(--normal-font-size);
+    background-color: var(--body-color);
+    color: var(--text-color);
+}
+
+h1, h2 {
+    color: var(--title-color);
+    font-weight: var(--font-semi-bold);
+}
+
+h3 {
+    color: var(--title-color);
+    font-weight: var(--font-medium);
+    text-align: center;
+}
+
+ul {
+    list-style-type: none;
+}
+
+a {
+    text-decoration: none;
+}
+
+a:hover,
+button:hover,
+.card:hover {
+    cursor: pointer;
+}
+
+
+/* Reusable classes */
+.container {
+    padding: 1.5rem;
+}
+
+.title {
+margin-bottom: var(--mb-2);
+}
+
+.subtitle {
+    margin-bottom: var(--mb-1);
+}
+
+/* Header */
+
+header {
+    background-color: #7161EF;
+
+}
+
+.header__container {
+    margin: 0 auto;
+    max-width: 70rem;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    gap: 5rem;
+}
+.tmdb__logo {
+    width: 10rem;
+    height: auto;
+}
+
+.header__logo {
+    
+    width: 3rem;
+    height: auto;
+}
+
+/* Search bar */
+input[type="search"]::-webkit-search-decoration,
+input[type="search"]::-webkit-search-cancel-button,
+input[type="search"]::-webkit-search-results-button,
+input[type="search"]::-webkit-search-results-decoration {
+    -webkit-appearance:none;
+}
+
+.search__container {
+    width: 100%;
+    max-width: 50em;
+    display: block;
+    margin: 0 auto;
+    padding-top: 5rem;
+    padding-bottom: 10rem;
+}
+
+.search__content {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.search__content p {
+    margin-bottom: var(--mb-2);
+    text-align: center;
+}
+
+input {
+    width: 100%;
+    padding: 2rem 2rem;
+    border-radius: 2.5rem;
+    border: 0.1rem solid #e2e2e2;
+    font-size: 1rem;
+    box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;
+}
+
+.search__button {
+    position: absolute;
+    bottom: 1.5rem;
+    right:0.5rem;
+    width: 5rem;
+    border: none;
+    height: fit-content;
+    background-color: rgb(255, 255, 255, 0);
+}
+
+.search__icon {
+    font-size: 2rem;
+    color: #7161EF;
+}
+
