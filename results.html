@@ -4,13 +4,13 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Suggest a movie</title>
+    <title>Search results - Suggesta</title>
     <link rel="apple-touch-icon" href="/img/apple-touch-icon.png">
-    <link rel="icon" type="image/x-icon" href="/img/favicon-32x32.png">
+    <link rel="icon" type="image/x-icon" href="/favicon.png">
     <link rel="stylesheet" href="./css/main.css">
     <link rel="stylesheet" href="https://unicons.iconscout.com/release/v4.0.0/css/line.css">
 </head>
-<body>
+<body id="results">
     <header>
         <div class="header header__container container">
             <h1>
@@ -19,15 +19,36 @@
             <div class="tmdb__logo" >
                 <img src="./img/tmdb-logo.svg" alt="">
             </div>
+            <div class="header__searchbar">
+                <form >
+                    <input class="searchbar" type="search" placeholder="Enter movie name...">
+                </form>
+                <button class="search__button">
+                    <span class="material-icons md-36">
+                        search
+                    </span>
+                </button>
+            </div>
         </div>
     </header>
     <main>
-        <div class="container search__container">
-            
-            <div class="search__content">
-                <h2 class="title">Wow! Here's what Suggesta found</h2>
-            </div>
-        </div>
+        <section class="container results__container">
+                <h2 class="title">Wow! Here's what I found</h2>
+                <div class="results__content">
+                    <!-- <div class="results__card">
+                        <div class="movie__info">
+                            <img src="./img/test.jpeg" alt="">
+                            <div class="movie__info-text">
+                                <h3>Movie Name</h3>
+                                <p>Year:</p>
+                                <p>Genre:</p>
+                                <p>Rating</p>
+                            </div>
+                        </div>
+                        <p class="movie__description">Lorem ipsum dolor sit amet consectetur adipisicing elit. Animi perferendis veniam at provident nemo numquam dolor consequatur fugit quam? Ipsam, dicta itaque neque cumque enim ducimus nisi deleniti ex voluptatem.</p>
+                    </div> -->
+                </div>
+        </section>
     </main>
     <footer>
 
