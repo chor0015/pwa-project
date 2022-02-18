@@ -114,6 +114,7 @@ text-align: center;
 
 .subtitle {
     margin-bottom: var(--mb-1);
+    margin-top: var(--mb-1);
 }
 
 /* Header */
@@ -293,6 +294,12 @@ input {
     align-items: center;
 }
 
-.error__gif img {
+.gif img {
     width: 100%;
+}
+
+/* Offline */
+
+.offline {
+    display: none;
 }
