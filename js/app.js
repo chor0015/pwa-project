@@ -81,20 +81,9 @@ const APP = {
     },
     
     createTransaction: (storeName)=>{
-        let isDataAdded = localStorage.getItem(`MDB${APP.DBVersion}`);
-
-        if (!isDataAdded) { //the data is not there
-            let tx = APP.DB.transaction(storeName, 'readwrite');
-            console.log({ tx });
-
-            APP.addResultsToDB(tx, storeName, index);
-            tx.oncomplete = function (ev) {
-                console.log('All movies added');
-                localStorage.setItem(`MDB${APP.DBVersion}`, true)
-            }
-            return tx
-        } else {
-        } 
+        let tx = APP.DB.transaction(storeName, 'readwrite');
+        //create a transaction to use for some interaction with the database
+        return tx;
     },
     getDBResults: (storeName, keyValue) => {
         //return the results from storeName where it matches keyValue
@@ -167,12 +156,16 @@ const APP = {
     },
 
     changeDisplay: () => {
+        let searchArea = document.getElementById('searchArea')
+        let offlineMessage = document.getElementById('offline')
         if (APP.isONLINE) {
             //online
-            
+            searchArea.classList.remove('display-none')
+            offlineMessage.classList.add('display-none')
         } else {
             //offline
-            document.body.style.background ='#000000'
+            searchArea.classList.add('display-none')
+            offlineMessage.classList.remove('display-none')
         }
     },
 

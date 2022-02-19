@@ -300,6 +300,6 @@ input {
 
 /* Offline */
 
-.offline {
+.display-none {
     display: none;
 }
