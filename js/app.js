@@ -8,6 +8,7 @@ const APP = {
     tmdbBASEURL: 'https://api.themoviedb.org/3/',
     tmdbAPIKEY: '99bfb48bf74bed439d4a45a53a55f249',
     tmdbIMAGEBASEURL: 'https://image.tmdb.org/t/p/w1280',
+    input: null,
     results: [],
     init: ()=>{
         //when the page loads
@@ -70,7 +71,6 @@ const APP = {
             APP.DB = dbOpenRequest.result;
             //or ev.target.result
             //result will be the reference to the database that you will use
-            console.log(APP.DB.oldVersion)
             console.log(APP.DB.name);
             console.log(APP.DB.version);
             console.log(APP.DB.objectStoreNames);
@@ -87,6 +87,19 @@ const APP = {
     },
     getDBResults: (storeName, keyValue) => {
         //return the results from storeName where it matches keyValue
+        console.log(storeName)
+        let searchStore = APP.createTransaction(storeName).objectStore(storeName)
+        let getRequest = searchStore.get(keyValue)
+        console.log(getRequest)
+        getRequest.onerror = (err) => {
+        };
+
+        getRequest.onsuccess = (ev) => {
+            let obj = getRequest.result;
+            console.log({ obj });
+            return obj
+        };
+        
     },
     addResultsToDB: (obj, storeName, index)=>{
         //pass in the name of the store
@@ -94,6 +107,11 @@ const APP = {
     },
     addListeners: ()=>{
         //add event listeners for DOM
+        let searchForm = document.querySelectorAll('#searchForm')
+        searchForm.forEach((form) => {
+            form.addEventListener('submit', APP.searchFormSubmitted)
+        })
+        // searchForm.addEventListener('submit', APP.searchFormSubmitted)
         
         //check if already installed
         if (navigator.standalone) {
@@ -177,12 +195,15 @@ const APP = {
     },
     searchFormSubmitted: (ev)=>{
         ev.preventDefault();
-        //get the keyword from teh input
-        //make sure it is not empty
-        //check the db for matches
-        //do a fetch call for search results
-        //save results to db
-        //navigate to url
+    
+        APP.input = document.getElementById('search').value;
+        if (APP.input) 
+        history.pushState({}, APP.input, `#${APP.input}`)
+        
+        console.log(APP.input)
+
+        let input = location.hash
+        APP.getSearchResults(APP.input)
     },
     cardListClicked: (ev)=>{
         // user clicked on a movie card
@@ -193,8 +214,11 @@ const APP = {
         //build a url
         //navigate to the suggest page
     },
-    getData: (endpoint, callback)=>{
+    getData: (input, nextStep)=>{
+        console.log(input)
         //do a fetch call to the endpoint
+        let url = `${APP.tmdbBASEURL}search/movie?api_key=${APP.tmdbAPIKEY}&query=${input}&language=en-US`
+        console.log('Fetching...')
         fetch(url)
             .then(resp=>{
                 if(resp.status >= 400){
@@ -202,8 +226,13 @@ const APP = {
                 }
                 return resp.json();
             })
+            
             .then(contents=>{
                 let results = contents.results;
+                console.log(results)
+                let newResults = results.map(({adult, backdrop_path, genre_ids, original_title, video, vote_count,...rest}) => rest)              
+                
+                console.log(newResults)
                 //remove the properties we don't need
                 //save the updated results to APP.results
                 // call the callback
@@ -211,9 +240,23 @@ const APP = {
             .catch(err=>{
                 //handle the NetworkError
             })
+            nextStep()
     },
-    getSearchResults:(keyword)=>{
+    getSearchResults:(input)=>{
         //check if online
+        if (APP.isONLINE) {
+            //online
+            if (APP.getDBResults('searchStore', input)) {
+                return APP.getDBResults('searchStore', input)
+            } else {
+                APP.getData(input, APP.displayCards)
+            }
+            
+        } else {
+            //offline
+            searchArea.classList.add('display-none')
+            offlineMessage.classList.remove('display-none')
+        }
         //check in DB for match of keyword in searchStore
         //if no match in DB do a fetch
         // APP.displayCards is the callback
