@@ -56,10 +56,10 @@ const APP = {
 
             //create searchStore with keyword as keyPath
             APP.searchStore = APP.DB.createObjectStore("searchStore", {keyPath: "keyword", autoIncrement: false,});
-            APP.searchStore.createIndex("by_title", "title", { unique: false });
+
             //create suggestStore with movieid as keyPath
             APP.suggestStore = APP.DB.createObjectStore("suggestStore", {keyPath: "movieid", autoIncrement: false,});
-            APP.suggestStore.createIndex("by_title", "title", { unique: false });
+
         }
         
         dbOpenRequest.onerror = function (err) {
@@ -87,21 +87,57 @@ const APP = {
     },
     getDBResults: (storeName, keyValue) => {
         //return the results from storeName where it matches keyValue
-        console.log(storeName)
+        console.log(keyValue)
         let searchStore = APP.createTransaction(storeName).objectStore(storeName)
-        let getRequest = searchStore.get(keyValue)
-        console.log(getRequest)
-        getRequest.onerror = (err) => {
+
+        let req = searchStore.openCursor(keyValue);
+        req.onsuccess = function(ev) {
+            var cursor = ev.target.result; 
+            if (cursor) { // key already exist
+                APP.navigate(keyValue)
+            } else { // key not exist
+                APP.getData(keyValue, APP.addResultsToDB)
+                console.log('getDBResults test')
+            }
         };
 
-        getRequest.onsuccess = (ev) => {
-            let obj = getRequest.result;
-            console.log({ obj });
-            return obj
-        };
+        // let getRequest = searchStore.get(keyValue)
+        // console.log(getRequest)
+
+        // getRequest.onerror = (err) => {
+        // };
+
+        // getRequest.onsuccess = (ev) => {
+        //     let obj = getRequest.result;
+        //     console.log({ obj });
+        //     return obj
+        // };
         
     },
-    addResultsToDB: (obj, storeName, index)=>{
+
+    addResultsToDB: (obj, storeName,input)=>{
+        console.log('i got to AddResultsToDB')
+        console.log(obj)
+        console.log(storeName)
+        let store = APP.createTransaction(storeName).objectStore(storeName)
+
+        let newObj = {
+            keyword: input,
+            results: obj,
+        };
+
+        let addReq = store.add(newObj);
+        
+        addReq.onerror = (err) => {
+            //failed insert
+        };
+        addReq.onsuccess = (ev) => {
+            console.log('movie added');
+            APP.getSearchResults(input)
+        //tx.oncomplete called now
+        };
+          //save the obj passed in to the appropriate store
+
         //pass in the name of the store
         //save the obj passed in to the appropriate store
     },
@@ -203,7 +239,7 @@ const APP = {
         console.log(APP.input)
 
         let input = location.hash
-        APP.getSearchResults(APP.input)
+        APP.getDBResults( 'searchStore', APP.input)
     },
     cardListClicked: (ev)=>{
         // user clicked on a movie card
@@ -229,34 +265,38 @@ const APP = {
             
             .then(contents=>{
                 let results = contents.results;
-                console.log(results)
-                let newResults = results.map(({adult, backdrop_path, genre_ids, original_title, video, vote_count,...rest}) => rest)              
-                
-                console.log(newResults)
+
+
                 //remove the properties we don't need
+                let newResults = results.map(({adult, backdrop_path, genre_ids, original_title, video, vote_count,...rest}) => rest)              
+
+
                 //save the updated results to APP.results
+                APP.results = newResults
+                console.log(APP.results)
+
                 // call the callback
+
+                nextStep(APP.results, 'searchStore', input)
+                
             })
             .catch(err=>{
                 //handle the NetworkError
             })
-            nextStep()
     },
     getSearchResults:(input)=>{
-        //check if online
-        if (APP.isONLINE) {
-            //online
-            if (APP.getDBResults('searchStore', input)) {
-                return APP.getDBResults('searchStore', input)
-            } else {
-                APP.getData(input, APP.displayCards)
-            }
+        let url = `/results.html`
+        console.log(url)
+        APP.navigate(url)
+        // //check if online
+        // if (APP.isONLINE) {
+        //     //online
             
-        } else {
-            //offline
-            searchArea.classList.add('display-none')
-            offlineMessage.classList.remove('display-none')
-        }
+        // } else {
+        //     //offline
+        //     searchArea.classList.add('display-none')
+        //     offlineMessage.classList.remove('display-none')
+        // }
         //check in DB for match of keyword in searchStore
         //if no match in DB do a fetch
         // APP.displayCards is the callback
@@ -274,7 +314,7 @@ const APP = {
     },
     navigate: (url)=>{
         //change the current page
-        window.location = url; //this should include the querystring
+        window.location = `${url}#${APP.input}`; //this should include the querystring
     }
 
 }
