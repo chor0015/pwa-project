@@ -7,9 +7,9 @@ const APP = {
     isONLINE: 'onLine' in navigator && navigator.onLine,
     tmdbBASEURL: 'https://api.themoviedb.org/3/',
     tmdbAPIKEY: '99bfb48bf74bed439d4a45a53a55f249',
-    tmdbIMAGEBASEURL: 'https://image.tmdb.org/t/p/w1280',
-    input: null,
+    tmdbIMAGEBASEURL: 'https://image.tmdb.org/t/p/w500',
     results: [],
+    input: null,
     init: ()=>{
         //when the page loads
         //open the database
@@ -85,44 +85,39 @@ const APP = {
         //create a transaction to use for some interaction with the database
         return tx;
     },
-    getDBResults: (storeName, keyValue) => {
-        //return the results from storeName where it matches keyValue
-        console.log(keyValue)
+    getDBResults: (storeName) => {
+        //  //return the results from storeName where it matches keyValue
+        //  console.log(keyValue)
+        console.log(window.location.search)
+        
         let searchStore = APP.createTransaction(storeName).objectStore(storeName)
 
-        let req = searchStore.openCursor(keyValue);
-        req.onsuccess = function(ev) {
-            var cursor = ev.target.result; 
-            if (cursor) { // key already exist
-                APP.navigate(keyValue)
-            } else { // key not exist
-                APP.getData(keyValue, APP.addResultsToDB)
-                console.log('getDBResults test')
-            }
-        };
-
-        // let getRequest = searchStore.get(keyValue)
-        // console.log(getRequest)
-
-        // getRequest.onerror = (err) => {
-        // };
-
-        // getRequest.onsuccess = (ev) => {
-        //     let obj = getRequest.result;
-        //     console.log({ obj });
-        //     return obj
-        // };
+            let getRequest = searchStore.get(APP.input);
+                
+            getRequest.onerror = (err) => {
+                    //error with get request... will trigger the tx.onerror too
+                
+            };
+            getRequest.onsuccess = (ev) => {
+                
+                console.log('DATA TAKEN FROM DB _ getDBResults TEST')
+                let obj = getRequest.result;
+                
+                console.log(obj)
+                APP.displayCards(obj)
+                    //will then trigger the tx.oncomplete
+            };
+    }, 
         
-    },
 
-    addResultsToDB: (obj, storeName,input)=>{
-        console.log('i got to AddResultsToDB')
+    addResultsToDB: (obj, storeName)=>{
+        console.log('I GOT TO THE ADD RESULTS TO DB')
         console.log(obj)
         console.log(storeName)
         let store = APP.createTransaction(storeName).objectStore(storeName)
 
         let newObj = {
-            keyword: input,
+            keyword: APP.input,
             results: obj,
         };
 
@@ -132,12 +127,11 @@ const APP = {
             //failed insert
         };
         addReq.onsuccess = (ev) => {
-            console.log('movie added');
-            APP.getSearchResults(input)
+            console.log('DATA ADDED TO DB _ addResultsToDB TEST')
+            APP.getDBResults(storeName)
         //tx.oncomplete called now
         };
-          //save the obj passed in to the appropriate store
-
+        //save the obj passed in to the appropriate store
         //pass in the name of the store
         //save the obj passed in to the appropriate store
     },
@@ -182,11 +176,15 @@ const APP = {
     },
 
     pageSpecific:()=>{
+        APP.input = window.location.href.split("=")[1]
+        console.log(APP.input)
         //anything that happens specifically on each page
         if(document.body.id === 'home'){
             //on the home page
         }
         if(document.body.id === 'results'){
+            
+            APP.getSearchResults( 'searchStore', APP.input)
             //on the results page
             //listener for clicking on the movie card container 
         }
@@ -204,21 +202,21 @@ const APP = {
         //TODO: send message to sw about being online or offline
         navigator.serviceWorker.ready.then((registration) => {
         registration.active.postMessage({ ONLINE: APP.isONLINE});
-    });
+        });
 
-    APP.changeDisplay();
+        APP.changeDisplay();
     },
 
     changeDisplay: () => {
-        let searchArea = document.getElementById('searchArea')
+        let mainContent = document.querySelector('.main__content')
         let offlineMessage = document.getElementById('offline')
         if (APP.isONLINE) {
             //online
-            searchArea.classList.remove('display-none')
+            mainContent.classList.remove('display-none')
             offlineMessage.classList.add('display-none')
         } else {
             //offline
-            searchArea.classList.add('display-none')
+            mainContent.classList.add('display-none')
             offlineMessage.classList.remove('display-none')
         }
     },
@@ -233,13 +231,12 @@ const APP = {
         ev.preventDefault();
     
         APP.input = document.getElementById('search').value;
-        if (APP.input) 
-        history.pushState({}, APP.input, `#${APP.input}`)
-        
-        console.log(APP.input)
+        if (APP.input) {
+            console.log('FORM SUBMITTED TEST')
+            let url = `/results.html?keyword=${APP.input}`
+            APP.navigate(url)
 
-        let input = location.hash
-        APP.getDBResults( 'searchStore', APP.input)
+        }
     },
     cardListClicked: (ev)=>{
         // user clicked on a movie card
@@ -250,10 +247,9 @@ const APP = {
         //build a url
         //navigate to the suggest page
     },
-    getData: (input, nextStep)=>{
-        console.log(input)
+    getData: (storeName)=>{
         //do a fetch call to the endpoint
-        let url = `${APP.tmdbBASEURL}search/movie?api_key=${APP.tmdbAPIKEY}&query=${input}&language=en-US`
+        let url = `${APP.tmdbBASEURL}search/movie?api_key=${APP.tmdbAPIKEY}&query=${APP.input}&language=en-US`
         console.log('Fetching...')
         fetch(url)
             .then(resp=>{
@@ -262,33 +258,27 @@ const APP = {
                 }
                 return resp.json();
             })
-            
+
             .then(contents=>{
+                console.log('FETCH SUCCSESSFUL')
                 let results = contents.results;
-
-
                 //remove the properties we don't need
                 let newResults = results.map(({adult, backdrop_path, genre_ids, original_title, video, vote_count,...rest}) => rest)              
-
 
                 //save the updated results to APP.results
                 APP.results = newResults
                 console.log(APP.results)
 
                 // call the callback
-
-                nextStep(APP.results, 'searchStore', input)
-                
+                APP.addResultsToDB(APP.results, storeName )
             })
             .catch(err=>{
                 //handle the NetworkError
             })
     },
-    getSearchResults:(input)=>{
-        let url = `/results.html`
-        console.log(url)
-        APP.navigate(url)
-        // //check if online
+    
+    getSearchResults:(storeName)=>{
+         // //check if online
         // if (APP.isONLINE) {
         //     //online
             
@@ -297,9 +287,26 @@ const APP = {
         //     searchArea.classList.add('display-none')
         //     offlineMessage.classList.remove('display-none')
         // }
-        //check in DB for match of keyword in searchStore
-        //if no match in DB do a fetch
-        // APP.displayCards is the callback
+        let searchStore = APP.createTransaction(storeName).objectStore(storeName)
+        let req = searchStore.openCursor(APP.input);
+            req.onsuccess = function (ev) {
+                let cursor = ev.target.result; 
+                //check in DB for match of keyword in searchStore
+                //if no match in DB do a fetch
+                if (cursor) { // key already exist
+                    APP.getDBResults(storeName, APP.input)
+                    // 
+                } else { // key not exist
+                    console.log('DATA IS NOT IN DB _ getSearchResults TEST')
+                    if (APP.isONLINE) {
+
+                        APP.getData(storeName)
+                    } else {
+                        APP.changeDisplay()
+                    }
+                }
+            }
+        
     },
     getSuggestedResults:(movieid)=>{
         //check if online
@@ -307,14 +314,89 @@ const APP = {
         //if no match in DB do a fetch 
         // APP.displayCards is the callback
     },
-    displayCards: ()=>{
+
+    displayCards: (results)=>{
+
+        let obj = JSON.stringify(results)
+        let DBEntry= JSON.parse(obj)
+        let moviesArr = DBEntry.results
+        console.log(moviesArr)
+        // <div class="results__content" id="resultsContent">
+        //             <!-- <div class="results__card">
+        //                 <div class="movie__info">
+        //                     <img src="./img/test.jpeg" alt="">
+        //                     <div class="movie__info-text">
+        //                         <h3>Movie Name</h3>
+        //                         <p>Year:</p>
+        //                         <p>Language:</p>
+        //                         <p>Rating</p>
+        //                     </div>
+        //                 </div>
+        //                 <p class="movie__description">Lorem ipsum dolor sit amet consectetur adipisicing elit. Animi perferendis veniam at provident nemo numquam dolor consequatur fugit quam? Ipsam, dicta itaque neque cumque enim ducimus nisi deleniti ex voluptatem.</p>
+        //             </div> -->
+        //         </div>
+
+    
+        
+        let resultsContent = document.querySelector('#resultsContent')
+        let df = document.createDocumentFragment()
+
+            moviesArr.forEach((movie) => {
+                let resultsCard = document.createElement('div')
+                resultsCard.setAttribute('id','resultsCard')
+                resultsCard.classList.add('results__card')
+                    let movieInfo = document.createElement('div')
+                    movieInfo.setAttribute('id', 'movieInfo')
+                    movieInfo.classList.add('movie__info')
+                        let img = document.createElement('img')
+                        let imgSrc 
+                        if (movie.poster_path) {
+                            imgSrc = APP.tmdbIMAGEBASEURL+movie.poster_path
+                        } else {
+                            imgSrc = './img/placeholder-img.png'
+                        }
+                        
+                        img.src = imgSrc
+                        img.setAttribute('alt', `Cover of "${movie.title}"` )
+                        let movieInfoText = document.createElement('div')
+                        movieInfoText.setAttribute('id', 'movieInfoText')
+                        movieInfoText.classList.add('movie__info-text')
+                            let h3 = document.createElement('h3')
+                            h3.textContent = `Title: ${movie.title}`
+                            let pYear = document.createElement('p')
+                            pYear.textContent =`Release year: ${movie.release_date.slice(0,4)}`
+                            let pLang = document.createElement('p')
+                            pLang.textContent = `Language: ${movie.original_language.toUpperCase()}`
+                            let rating = document.createElement('p')
+                            rating.textContent = movie.vote_average
+                    let movieDescription = document.createElement('p')
+                    movieDescription.textContent = movie.overview
+                    movieDescription.classList.add('movie__description')
+                    
+                        
+                        movieInfoText.append(h3, pYear, pLang, rating)
+                    movieInfo.append(img, movieInfoText)
+                resultsCard.append(movieInfo, movieDescription)
+                console.log(resultsCard)
+            df.append(resultsCard)
+            })
+
+            resultsContent.append(df)
+        
+
         //display all the movie cards based on the results array
         // in APP.results
         //these results could be from the database or from a fetch
     },
     navigate: (url)=>{
         //change the current page
-        window.location = `${url}#${APP.input}`; //this should include the querystring
+        
+        window.location = url
+        console.log('NAVIGATED')
+        
+        APP.pageSpecific()
+        
+        
     }
 
 }

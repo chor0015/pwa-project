@@ -32,22 +32,29 @@
         </div>
     </header>
     <main>
-        <section class="container results__container">
+        <section id="searchResultsArea" class="container results__container main__content">
                 <h2 class="title">Wow! Here's what I found</h2>
-                <div class="results__content">
-                    <!-- <div class="results__card">
-                        <div class="movie__info">
-                            <img src="./img/test.jpeg" alt="">
-                            <div class="movie__info-text">
-                                <h3>Movie Name</h3>
-                                <p>Year:</p>
-                                <p>Genre:</p>
-                                <p>Rating</p>
+                    <div class="results__content" id="resultsContent">
+                        <!-- <div class="results__card">
+                            <div class="movie__info">
+                                <img src="./img/test.jpeg" alt="">
+                                <div class="movie__info-text">
+                                    <h3>Movie Name</h3>
+                                    <p>Year:</p>
+                                    <p>Genre:</p>
+                                    <p>Rating</p>
+                                </div>
                             </div>
-                        </div>
-                        <p class="movie__description">Lorem ipsum dolor sit amet consectetur adipisicing elit. Animi perferendis veniam at provident nemo numquam dolor consequatur fugit quam? Ipsam, dicta itaque neque cumque enim ducimus nisi deleniti ex voluptatem.</p>
-                    </div> -->
+                            <p class="movie__description">Lorem ipsum dolor sit amet consectetur adipisicing elit. Animi perferendis veniam at provident nemo numquam dolor consequatur fugit quam? Ipsam, dicta itaque neque cumque enim ducimus nisi deleniti ex voluptatem.</p>
+                        </div> -->
+                    </div>
                 </div>
+        </section>
+         <section class="container error__container display-none" id="offline">
+            <h2 class="title">Hmm...Looks like the app is offline.</h2>
+            <div class="gif"><img src="./img/offline.webp" alt=""></div>
+            <h3 class="subtitle">Please, check your internet connection and try again.</h3>
+            <p>While you're offline you can only go through your past searches.</p>
         </section>
     </main>
     <footer>

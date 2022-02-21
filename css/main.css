@@ -245,7 +245,7 @@ input {
     flex-direction: row;
     flex-wrap: wrap;
     justify-content: center;
-    align-items: center;
+    align-items: flex-start;
     gap: 1rem;
 }
 
@@ -253,17 +253,26 @@ input {
 
 .results__card,
 .suggest__card {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
     width: 100%;
     max-width: 100%;
     padding: 1rem;
     box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;
     border-radius: 1rem;
+    text-align: left;
+}
+
+.results__card h3,
+.suggest__card h3 {
+    text-align: left;
 }
 
 @media screen and (min-width: 40em) {
     .results__card,
     .suggest__card  {
-        max-width: 18em;
+        max-width: 25em;
     }
 }
 
@@ -277,6 +286,7 @@ input {
     display: flex;
     flex-direction: row;
     gap: 1rem;
+    height: 10rem;
 }
 
 .movie__description {
@@ -285,6 +295,7 @@ input {
     -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;  
     overflow: hidden;
+    
 }
 
 /* Error */
