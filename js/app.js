@@ -99,7 +99,6 @@ const APP = {
             }
 
             if (storeName==='suggestStore') {
-                console.log(`TESTING FOR STORENAME ${APP.movieTitle}`)
                 getRequest = searchStore.get(APP.movieId);
             }
                 
@@ -111,8 +110,7 @@ const APP = {
                 
                 console.log('DATA TAKEN FROM DB _ getDBResults TEST')
                 let obj = getRequest.result;
-                
-
+            
                 APP.displayCards(obj)
                     //will then trigger the tx.oncomplete
             };
@@ -248,6 +246,18 @@ const APP = {
         }
     },
 
+    gotMessage: (ev) => {
+        //received message from service worker
+        console.log(ev.data);
+    },
+
+    sendMessage: (msg) => {
+        //send messages to the service worker
+        navigator.serviceWorker.ready.then((registration) => {
+            registration.active.postMessage(msg);
+        });
+    },
+
     searchFormSubmitted: (ev)=>{
         ev.preventDefault();
     
@@ -264,18 +274,11 @@ const APP = {
         //get the title and movie id
         let movieId = ev.target.closest('.results__card').getAttribute('data-id');
         let movieTitle = ev.target.closest('.results__card').getAttribute('data-title')
-        APP.movieTitle = movieTitle
         console.log(movieId)
-        console.log(APP.movieTitle)
 
         let url = `/suggested.html?movieid=${movieId}=movietitle=${movieTitle}`
         APP.navigate(url, movieTitle)
-        
-        //check the db for matches
-        //do a fetch for the suggest results
-        //save results to db
-        //build a url
-        //navigate to the suggest page
+
     },
     getData: (storeName)=>{
         //do a fetch call to the endpoint
@@ -311,12 +314,13 @@ const APP = {
                 //remove the properties we don't need
                 let newResults = results.map(({adult, backdrop_path, genre_ids, original_title, video, vote_count,...rest}) => rest)              
 
-                //save the updated results to APP.results
-                APP.results = newResults
-   
+                    //save the updated results to APP.results
+                    APP.results = newResults
+                    
+                    console.log(`${APP.results} AFTER FETCH`)
+                    // call the callback
+                    APP.addResultsToDB(APP.results, storeName )
 
-                // call the callback
-                APP.addResultsToDB(APP.results, storeName )
             })
             .catch(err=>{
                 //handle the NetworkError
@@ -386,126 +390,84 @@ const APP = {
         let obj = JSON.stringify(results)
         let DBEntry= JSON.parse(obj)
         let moviesArr = DBEntry.results
-        console.log(APP.movieTitle)
-        console.log(moviesArr)
+
+        if (moviesArr.length == 0) {
+            console.log('there are no suggested movies')
+             let url = '/404.html'
+             APP.navigate(url)  
+        } else { 
+            console.log(moviesArr)
+
+            let movieTitle = location.href.split("=")[1]
+            let clickedMovieTitle =  location.href.split("=")[3]
 
 
-        if(document.body.id === 'results'){
-            console.log('BUILDING CARD FOR RESULTS')
-            let resultsPageTitle = document.getElementById('resultsPageTitle')
-            let keyword =  location.href.split("=")[1]
-            let span = document.createElement('span')
-            span.style.color = '#6e57e0'
-            span.textContent = `"${keyword}"`
+            if (document.body.id === 'results'){
+                console.log('BUILDING CARD FOR RESULTS')
+                let resultsPageTitle = document.getElementById('resultsPageTitle')
+                let span = document.createElement('span')
+                span.style.color = '#6e57e0'
+                span.textContent = `"${movieTitle.replace(/[\s.;,&?%0-9]/g, ' ')}"`
 
-            resultsPageTitle.textContent = `Wow! Here's what I found for `
-            resultsPageTitle.append(span)
+                resultsPageTitle.textContent = `Wow! Here's what I found for `
+                resultsPageTitle.append(span)
 
-            let resultsContent = document.querySelector('#resultsContent')
-            let df = document.createDocumentFragment()
+            } if ((document.body.id === 'suggest')) {
+                let span = document.getElementById('movieName')
+                span.style.color = '#6e57e0'
+                span.textContent = `"${clickedMovieTitle.replace(/[\s.;,&?%0-9]/g, ' ')}"`
 
-                moviesArr.forEach((movie) => {
-                    let resultsCard = document.createElement('div')
-                    resultsCard.setAttribute('data-id', movie.id)
-                    resultsCard.setAttribute('data-title', movie.title)
-                    resultsCard.classList.add('results__card')
-                        let movieInfo = document.createElement('div')
-                        movieInfo.setAttribute('id', 'movieInfo')
-                        movieInfo.classList.add('movie__info')
-                            let img = document.createElement('img')
-                            let imgSrc 
-                            if (movie.poster_path) {
-                                imgSrc = `${APP.tmdbIMAGEBASEURL}${movie.poster_path}`
-                            } else {
-                                imgSrc = './img/placeholder-img.png'
-                            }
-                            img.src = imgSrc
-    
-                            img.setAttribute('alt', `Cover of "${movie.title}"` )
-                            let movieInfoText = document.createElement('div')
-                            movieInfoText.setAttribute('id', 'movieInfoText')
-                            movieInfoText.classList.add('movie__info-text')
-                                let h3 = document.createElement('h3')
-                                h3.textContent = `Title: ${movie.title}`
-                                let pYear = document.createElement('p')
-                                if(movie.release_date) {
-                                    pYear.textContent =`Release year: ${movie.release_date.slice(0,4)}`
+            }
+
+                let resultsContent = document.querySelector('#resultsContent')
+                let df = document.createDocumentFragment()
+
+                    moviesArr.forEach((movie) => {
+                        let resultsCard = document.createElement('div')
+                        resultsCard.setAttribute('data-id', movie.id)
+                        resultsCard.setAttribute('data-title', movie.title)
+                        resultsCard.classList.add('results__card')
+                            let movieInfo = document.createElement('div')
+                            movieInfo.setAttribute('id', 'movieInfo')
+                            movieInfo.classList.add('movie__info')
+                                let img = document.createElement('img')
+                                let imgSrc 
+                                if (movie.poster_path) {
+                                    imgSrc = `${APP.tmdbIMAGEBASEURL}${movie.poster_path}`
+                                } else {
+                                    imgSrc = './img/placeholder-img.png'
                                 }
-                                let pLang = document.createElement('p')
-                                pLang.textContent = `Language: ${movie.original_language.toUpperCase()}`
-                                let rating = document.createElement('p')
-                                rating.textContent = `Rating: ${movie.vote_average}`
-                        let movieDescription = document.createElement('p')
-                        movieDescription.textContent = movie.overview
-                        movieDescription.classList.add('movie__description')
-                        
+                                img.src = imgSrc
+        
+                                img.setAttribute('alt', `Cover of "${movie.title}"` )
+                                let movieInfoText = document.createElement('div')
+                                movieInfoText.setAttribute('id', 'movieInfoText')
+                                movieInfoText.classList.add('movie__info-text')
+                                    let h3 = document.createElement('h3')
+                                    h3.textContent = `Title: ${movie.title}`
+                                    let pYear = document.createElement('p')
+                                    if(movie.release_date) {
+                                        pYear.textContent =`Release year: ${movie.release_date.slice(0,4)}`
+                                    }
+                                    let pLang = document.createElement('p')
+                                    pLang.textContent = `Language: ${movie.original_language.toUpperCase()}`
+                                    let rating = document.createElement('p')
+                                    rating.textContent = `Rating: ${movie.vote_average}`
+                            let movieDescription = document.createElement('p')
+                            movieDescription.textContent = movie.overview
+                            movieDescription.classList.add('movie__description')
                             
-                            movieInfoText.append(h3, pYear, pLang, rating)
-                        movieInfo.append(img, movieInfoText)
-                    resultsCard.append(movieInfo, movieDescription)
-                df.append(resultsCard)
-            })
+                                
+                                movieInfoText.append(h3, pYear, pLang, rating)
+                            movieInfo.append(img, movieInfoText)
+                        resultsCard.append(movieInfo, movieDescription)
+                    df.append(resultsCard)
+                })
 
             resultsContent.append(df)
-        } else 
-        
-        if (document.body.id === 'suggest') {
-            console.log('BUILDING CARD FOR SUGGESTED')
-            let keyword =  location.href.split("=")[3]
-            
-            let span = document.getElementById('movieName')
-            span.style.color = '#6e57e0'
-            span.textContent = `"${keyword.replace(/[\s.;,&?%0-9]/g, ' ')}"`
-            let suggestContent = document.querySelector('#suggestContent')
-            let df = document.createDocumentFragment()
 
-                moviesArr.forEach((movie) => {
-                    let suggestCard = document.createElement('div')
-                    suggestCard.setAttribute('data-id', movie.id)
-                    suggestCard.setAttribute('data-title', movie.title)
-                    suggestCard.classList.add('suggest__card')
-                        let movieInfo = document.createElement('div')
-                        movieInfo.setAttribute('id', 'movieInfo')
-                        movieInfo.classList.add('movie__info')
-                            let img = document.createElement('img')
-                            let imgSrc 
-                            if (movie.poster_path) {
-                                imgSrc = `${APP.tmdbIMAGEBASEURL}${movie.poster_path}`
-                            } else {
-                                imgSrc = './img/placeholder-img.png'
-                            }
-                            img.src = imgSrc
-    
-                            img.setAttribute('alt', `Cover of "${movie.title}"` )
-                            let movieInfoText = document.createElement('div')
-                            movieInfoText.setAttribute('id', 'movieInfoText')
-                            movieInfoText.classList.add('movie__info-text')
-                                let h3 = document.createElement('h3')
-                                h3.textContent = `Title: ${movie.title}`
-                                let pYear = document.createElement('p')
-                                if(movie.release_date) {
-                                    pYear.textContent =`Release year: ${movie.release_date.slice(0,4)}`
-                                }
-                                let pLang = document.createElement('p')
-                                pLang.textContent = `Language: ${movie.original_language.toUpperCase()}`
-                                let rating = document.createElement('p')
-                                rating.textContent = `Rating: ${movie.vote_average}`
-                        let movieDescription = document.createElement('p')
-                        movieDescription.textContent = movie.overview
-                        movieDescription.classList.add('movie__description')
-                        
-                            
-                            movieInfoText.append(h3, pYear, pLang, rating)
-                        movieInfo.append(img, movieInfoText)
-                    suggestCard.append(movieInfo, movieDescription)
-                df.append(suggestCard)
-            })
-
-            suggestContent.append(df)
-        }
-        
-            
             APP.addListeners()
+         } 
 
         //display all the movie cards based on the results array
         // in APP.results
@@ -513,14 +475,15 @@ const APP = {
     },
     navigate: (url, movieTitle)=>{
         //change the current page
-        
-        window.location = url
-        console.log('NAVIGATED')
-        APP.movieTitle = movieTitle
-        console.log(movieTitle)
-        APP.pageSpecific()
-        
-        
+
+        if (url==='/404.html') {
+            window.location = url
+            console.log('NAVIGATED to 404')
+        } else {
+            window.location = url
+            console.log('NAVIGATED')
+            APP.pageSpecific() 
+        }
     }
 
 }
