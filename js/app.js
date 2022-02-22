@@ -268,7 +268,7 @@ const APP = {
         console.log(movieId)
         console.log(APP.movieTitle)
 
-        let url = `/suggested.html?movieid=${movieId}`
+        let url = `/suggested.html?movieid=${movieId}=movietitle=${movieTitle}`
         APP.navigate(url, movieTitle)
         
         //check the db for matches
@@ -291,7 +291,7 @@ const APP = {
             APP.movieId = movieId
 
             console.log(movieId)
-            url = `${APP.tmdbBASEURL}/movie/${movieId}/recommendations?api_key=${APP.tmdbAPIKEY}&language=en-US&page=1`
+            url = `${APP.tmdbBASEURL}movie/${movieId}/recommendations?api_key=${APP.tmdbAPIKEY}&language=en-US&page=1`
         }
          
         
@@ -451,10 +451,11 @@ const APP = {
         
         if (document.body.id === 'suggest') {
             console.log('BUILDING CARD FOR SUGGESTED')
-            let keyword =  location.href.split("=")[1]
+            let keyword =  location.href.split("=")[3]
+            
             let span = document.getElementById('movieName')
             span.style.color = '#6e57e0'
-            span.textContent = keyword
+            span.textContent = `"${keyword.replace(/[\s.;,&?%0-9]/g, ' ')}"`
             let suggestContent = document.querySelector('#suggestContent')
             let df = document.createDocumentFragment()
 
