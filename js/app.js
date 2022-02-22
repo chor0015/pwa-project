@@ -10,6 +10,8 @@ const APP = {
     tmdbIMAGEBASEURL: 'https://image.tmdb.org/t/p/w500',
     results: [],
     input: null,
+    movieId: null,
+    movieTitle: null,
     init: ()=>{
         //when the page loads
         //open the database
@@ -91,8 +93,15 @@ const APP = {
         console.log(window.location.search)
         
         let searchStore = APP.createTransaction(storeName).objectStore(storeName)
+        let getRequest
+            if (storeName==='searchStore') {
+                getRequest = searchStore.get(APP.input);
+            }
 
-            let getRequest = searchStore.get(APP.input);
+            if (storeName==='suggestStore') {
+                console.log(`TESTING FOR STORENAME ${APP.movieTitle}`)
+                getRequest = searchStore.get(APP.movieId);
+            }
                 
             getRequest.onerror = (err) => {
                     //error with get request... will trigger the tx.onerror too
@@ -103,7 +112,7 @@ const APP = {
                 console.log('DATA TAKEN FROM DB _ getDBResults TEST')
                 let obj = getRequest.result;
                 
-                console.log(obj)
+
                 APP.displayCards(obj)
                     //will then trigger the tx.oncomplete
             };
@@ -112,19 +121,28 @@ const APP = {
 
     addResultsToDB: (obj, storeName)=>{
         console.log('I GOT TO THE ADD RESULTS TO DB')
-        console.log(obj)
-        console.log(storeName)
+
         let store = APP.createTransaction(storeName).objectStore(storeName)
 
-        let newObj = {
-            keyword: APP.input,
-            results: obj,
-        };
+        let newObj
+        if(storeName==='searchStore') {
+            newObj = {
+                keyword: APP.input,
+                results: obj,
+            };
+        }
+        if(storeName==='suggestStore') {
+            newObj = {
+                movieid: APP.movieId,
+                results: obj,
+            };
+        }
+
 
         let addReq = store.add(newObj);
         
         addReq.onerror = (err) => {
-            //failed insert
+            console.log(err)
         };
         addReq.onsuccess = (ev) => {
             console.log('DATA ADDED TO DB _ addResultsToDB TEST')
@@ -141,8 +159,14 @@ const APP = {
         searchForm.forEach((form) => {
             form.addEventListener('submit', APP.searchFormSubmitted)
         })
-        // searchForm.addEventListener('submit', APP.searchFormSubmitted)
         
+
+        if(document.body.id === 'results'){
+            let cards = document.querySelectorAll('.results__card')
+            cards.forEach((card) => {
+                card.addEventListener('click', APP.cardListClicked)
+            })
+        }
         //check if already installed
         if (navigator.standalone) {
             console.log('Launched: Installed (iOS)');
@@ -177,6 +201,7 @@ const APP = {
 
     pageSpecific:()=>{
         APP.input = window.location.href.split("=")[1]
+  
         console.log(APP.input)
         //anything that happens specifically on each page
         if(document.body.id === 'home'){
@@ -189,6 +214,8 @@ const APP = {
             //listener for clicking on the movie card container 
         }
         if(document.body.id === 'suggest'){
+            let movieId =  location.href.split("=")[1]
+            APP.getSuggestedResults('suggestStore', movieId)
             //on the suggest page
             //listener for clicking on the movie card container 
         }
@@ -221,12 +248,6 @@ const APP = {
         }
     },
 
-    messageReceived: (ev)=>{
-        //ev.data
-    },
-    sendMessage: (msg)=>{
-        //send a message to the service worker
-    },
     searchFormSubmitted: (ev)=>{
         ev.preventDefault();
     
@@ -241,6 +262,15 @@ const APP = {
     cardListClicked: (ev)=>{
         // user clicked on a movie card
         //get the title and movie id
+        let movieId = ev.target.closest('.results__card').getAttribute('data-id');
+        let movieTitle = ev.target.closest('.results__card').getAttribute('data-title')
+        APP.movieTitle = movieTitle
+        console.log(movieId)
+        console.log(APP.movieTitle)
+
+        let url = `/suggested.html?movieid=${movieId}`
+        APP.navigate(url, movieTitle)
+        
         //check the db for matches
         //do a fetch for the suggest results
         //save results to db
@@ -249,7 +279,23 @@ const APP = {
     },
     getData: (storeName)=>{
         //do a fetch call to the endpoint
-        let url = `${APP.tmdbBASEURL}search/movie?api_key=${APP.tmdbAPIKEY}&query=${APP.input}&language=en-US`
+        console.log(location.href)
+        let url
+        
+        if (storeName === 'searchStore') {
+            url = `${APP.tmdbBASEURL}search/movie?api_key=${APP.tmdbAPIKEY}&query=${APP.input}&language=en-US`
+        }
+
+        if (storeName === 'suggestStore') {
+            let movieId = location.href.split("=")[1]
+            APP.movieId = movieId
+
+            console.log(movieId)
+            url = `${APP.tmdbBASEURL}/movie/${movieId}/recommendations?api_key=${APP.tmdbAPIKEY}&language=en-US&page=1`
+        }
+         
+        
+
         console.log('Fetching...')
         fetch(url)
             .then(resp=>{
@@ -267,7 +313,7 @@ const APP = {
 
                 //save the updated results to APP.results
                 APP.results = newResults
-                console.log(APP.results)
+   
 
                 // call the callback
                 APP.addResultsToDB(APP.results, storeName )
@@ -308,7 +354,27 @@ const APP = {
             }
         
     },
-    getSuggestedResults:(movieid)=>{
+    getSuggestedResults:(storeName, movieId)=>{
+
+        let suggestStore = APP.createTransaction(storeName).objectStore(storeName)
+        let req = suggestStore.openCursor(movieId);
+            req.onsuccess = function (ev) {
+                let cursor = ev.target.result; 
+                //check in DB for match of keyword in searchStore
+                //if no match in DB do a fetch
+                if (cursor) { // key already exist
+                    APP.getDBResults(storeName, movieId)
+                    // 
+                } else { // key not exist
+                    console.log('DATA IS NOT IN DB _ getSearchResults TEST')
+                    if (APP.isONLINE) {
+
+                        APP.getData(storeName)
+                    } else {
+                        APP.changeDisplay()
+                    }
+                }
+            }
         //check if online
         //check in DB for match of movieid in suggestStore
         //if no match in DB do a fetch 
@@ -320,80 +386,137 @@ const APP = {
         let obj = JSON.stringify(results)
         let DBEntry= JSON.parse(obj)
         let moviesArr = DBEntry.results
+        console.log(APP.movieTitle)
         console.log(moviesArr)
-        // <div class="results__content" id="resultsContent">
-        //             <!-- <div class="results__card">
-        //                 <div class="movie__info">
-        //                     <img src="./img/test.jpeg" alt="">
-        //                     <div class="movie__info-text">
-        //                         <h3>Movie Name</h3>
-        //                         <p>Year:</p>
-        //                         <p>Language:</p>
-        //                         <p>Rating</p>
-        //                     </div>
-        //                 </div>
-        //                 <p class="movie__description">Lorem ipsum dolor sit amet consectetur adipisicing elit. Animi perferendis veniam at provident nemo numquam dolor consequatur fugit quam? Ipsam, dicta itaque neque cumque enim ducimus nisi deleniti ex voluptatem.</p>
-        //             </div> -->
-        //         </div>
 
+
+        if(document.body.id === 'results'){
+            console.log('BUILDING CARD FOR RESULTS')
+            let resultsPageTitle = document.getElementById('resultsPageTitle')
+            let keyword =  location.href.split("=")[1]
+            let span = document.createElement('span')
+            span.style.color = '#6e57e0'
+            span.textContent = `"${keyword}"`
+
+            resultsPageTitle.textContent = `Wow! Here's what I found for `
+            resultsPageTitle.append(span)
+
+            let resultsContent = document.querySelector('#resultsContent')
+            let df = document.createDocumentFragment()
+
+                moviesArr.forEach((movie) => {
+                    let resultsCard = document.createElement('div')
+                    resultsCard.setAttribute('data-id', movie.id)
+                    resultsCard.setAttribute('data-title', movie.title)
+                    resultsCard.classList.add('results__card')
+                        let movieInfo = document.createElement('div')
+                        movieInfo.setAttribute('id', 'movieInfo')
+                        movieInfo.classList.add('movie__info')
+                            let img = document.createElement('img')
+                            let imgSrc 
+                            if (movie.poster_path) {
+                                imgSrc = `${APP.tmdbIMAGEBASEURL}${movie.poster_path}`
+                            } else {
+                                imgSrc = './img/placeholder-img.png'
+                            }
+                            img.src = imgSrc
     
-        
-        let resultsContent = document.querySelector('#resultsContent')
-        let df = document.createDocumentFragment()
-
-            moviesArr.forEach((movie) => {
-                let resultsCard = document.createElement('div')
-                resultsCard.setAttribute('id','resultsCard')
-                resultsCard.classList.add('results__card')
-                    let movieInfo = document.createElement('div')
-                    movieInfo.setAttribute('id', 'movieInfo')
-                    movieInfo.classList.add('movie__info')
-                        let img = document.createElement('img')
-                        let imgSrc 
-                        if (movie.poster_path) {
-                            imgSrc = APP.tmdbIMAGEBASEURL+movie.poster_path
-                        } else {
-                            imgSrc = './img/placeholder-img.png'
-                        }
+                            img.setAttribute('alt', `Cover of "${movie.title}"` )
+                            let movieInfoText = document.createElement('div')
+                            movieInfoText.setAttribute('id', 'movieInfoText')
+                            movieInfoText.classList.add('movie__info-text')
+                                let h3 = document.createElement('h3')
+                                h3.textContent = `Title: ${movie.title}`
+                                let pYear = document.createElement('p')
+                                if(movie.release_date) {
+                                    pYear.textContent =`Release year: ${movie.release_date.slice(0,4)}`
+                                }
+                                let pLang = document.createElement('p')
+                                pLang.textContent = `Language: ${movie.original_language.toUpperCase()}`
+                                let rating = document.createElement('p')
+                                rating.textContent = `Rating: ${movie.vote_average}`
+                        let movieDescription = document.createElement('p')
+                        movieDescription.textContent = movie.overview
+                        movieDescription.classList.add('movie__description')
                         
-                        img.src = imgSrc
-                        img.setAttribute('alt', `Cover of "${movie.title}"` )
-                        let movieInfoText = document.createElement('div')
-                        movieInfoText.setAttribute('id', 'movieInfoText')
-                        movieInfoText.classList.add('movie__info-text')
-                            let h3 = document.createElement('h3')
-                            h3.textContent = `Title: ${movie.title}`
-                            let pYear = document.createElement('p')
-                            pYear.textContent =`Release year: ${movie.release_date.slice(0,4)}`
-                            let pLang = document.createElement('p')
-                            pLang.textContent = `Language: ${movie.original_language.toUpperCase()}`
-                            let rating = document.createElement('p')
-                            rating.textContent = movie.vote_average
-                    let movieDescription = document.createElement('p')
-                    movieDescription.textContent = movie.overview
-                    movieDescription.classList.add('movie__description')
-                    
-                        
-                        movieInfoText.append(h3, pYear, pLang, rating)
-                    movieInfo.append(img, movieInfoText)
-                resultsCard.append(movieInfo, movieDescription)
-                console.log(resultsCard)
-            df.append(resultsCard)
+                            
+                            movieInfoText.append(h3, pYear, pLang, rating)
+                        movieInfo.append(img, movieInfoText)
+                    resultsCard.append(movieInfo, movieDescription)
+                df.append(resultsCard)
             })
 
             resultsContent.append(df)
+        } else 
         
+        if (document.body.id === 'suggest') {
+            console.log('BUILDING CARD FOR SUGGESTED')
+            let keyword =  location.href.split("=")[1]
+            let span = document.getElementById('movieName')
+            span.style.color = '#6e57e0'
+            span.textContent = keyword
+            let suggestContent = document.querySelector('#suggestContent')
+            let df = document.createDocumentFragment()
+
+                moviesArr.forEach((movie) => {
+                    let suggestCard = document.createElement('div')
+                    suggestCard.setAttribute('data-id', movie.id)
+                    suggestCard.setAttribute('data-title', movie.title)
+                    suggestCard.classList.add('suggest__card')
+                        let movieInfo = document.createElement('div')
+                        movieInfo.setAttribute('id', 'movieInfo')
+                        movieInfo.classList.add('movie__info')
+                            let img = document.createElement('img')
+                            let imgSrc 
+                            if (movie.poster_path) {
+                                imgSrc = `${APP.tmdbIMAGEBASEURL}${movie.poster_path}`
+                            } else {
+                                imgSrc = './img/placeholder-img.png'
+                            }
+                            img.src = imgSrc
+    
+                            img.setAttribute('alt', `Cover of "${movie.title}"` )
+                            let movieInfoText = document.createElement('div')
+                            movieInfoText.setAttribute('id', 'movieInfoText')
+                            movieInfoText.classList.add('movie__info-text')
+                                let h3 = document.createElement('h3')
+                                h3.textContent = `Title: ${movie.title}`
+                                let pYear = document.createElement('p')
+                                if(movie.release_date) {
+                                    pYear.textContent =`Release year: ${movie.release_date.slice(0,4)}`
+                                }
+                                let pLang = document.createElement('p')
+                                pLang.textContent = `Language: ${movie.original_language.toUpperCase()}`
+                                let rating = document.createElement('p')
+                                rating.textContent = `Rating: ${movie.vote_average}`
+                        let movieDescription = document.createElement('p')
+                        movieDescription.textContent = movie.overview
+                        movieDescription.classList.add('movie__description')
+                        
+                            
+                            movieInfoText.append(h3, pYear, pLang, rating)
+                        movieInfo.append(img, movieInfoText)
+                    suggestCard.append(movieInfo, movieDescription)
+                df.append(suggestCard)
+            })
+
+            suggestContent.append(df)
+        }
+        
+            
+            APP.addListeners()
 
         //display all the movie cards based on the results array
         // in APP.results
         //these results could be from the database or from a fetch
     },
-    navigate: (url)=>{
+    navigate: (url, movieTitle)=>{
         //change the current page
         
         window.location = url
         console.log('NAVIGATED')
-        
+        APP.movieTitle = movieTitle
+        console.log(movieTitle)
         APP.pageSpecific()
         
         

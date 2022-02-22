@@ -61,7 +61,7 @@ self.addEventListener('fetch', (ev) => {
             fetch(ev.request)
                 .then((fetchRes) => {
                 //TODO: check here for the 404 error
-                if (!fetchRes.ok) throw new Error(fetchRes.statusText);
+                if( fetchRes.status > 399)  throw new Error(fetchRes.statusText);
     
                 return caches.open(dynamicCache).then((cache) => {
                     let copy = fetchRes.clone(); //make a copy of the response
@@ -69,6 +69,7 @@ self.addEventListener('fetch', (ev) => {
                     return fetchRes; //send the original response back up the chain
                 });
                 })
+                
                 .catch((err) => {
                     console.log('SW fetch failed');
                     console.warn(err);
