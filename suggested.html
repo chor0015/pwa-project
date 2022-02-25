@@ -14,7 +14,7 @@
     <header>
         <div class="header header__container container">
             <h1>
-                <a href="/"><img src="./img/apple-touch-icon.png" class="header__logo" alt=""></a>
+                <a href="/"><img src="./img/logo.png" class="header__logo" alt=""></a>
             </h1>
             <div class="tmdb__logo" >
                 <img src="./img/tmdb-logo.svg" alt="">
@@ -32,23 +32,18 @@
         </div>
     </header>
     <main>
+        <section class="container error__container display-none" id="offline">
+            <p>Hmm...I noticed you're offline. You can keep using the app but do not search for anything new. Otherwise you'll see a sad crab. It doesn't bite, though.</p>
+        </section>
         <section id="resultsArea" class="container results__container main__content">
             <h2 class="title" id="resultsPageTitle">Here are some movies similar to <span id="movieName"></span> that you might like</h2>
             <div class="results__content" id="resultsContent">
-                <!-- <div class="suggest__card">
-                    <div class="movie__info">
-                        <img src="./img/test.jpeg" alt="">
-                        <div class="movie__info-text">
-                            <h3>Movie Name</h3>
-                            <p>Year:</p>
-                            <p>Genre:</p>
-                            <p>Rating</p>
-                        </div>
-                    </div>
-                    <p class="movie__description">Lorem ipsum dolor sit amet consectetur adipisicing elit. Animi perferendis veniam at provident nemo numquam dolor consequatur fugit quam? Ipsam, dicta itaque neque cumque enim ducimus nisi deleniti ex voluptatem.</p>
-                </div> -->
             </div>
     </section>
+    <section class="container error__container display-none"  id="noMovies">
+        <h2 class="title">It looks like there are no similar movies to</h2>
+    </section>
+    
     </main>
     <footer>
 

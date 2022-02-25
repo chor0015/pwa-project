@@ -1,7 +1,8 @@
 const version = 1;
 const staticCache = `PWA-Static-Movie-APP-${version}`;
 const dynamicCache = `PWA-Dynamic-Movie-APP-${version}`;
-const cacheLimit = 100;
+const dynamicImgCache = `PWA-Dynamic-Img-Movie-APP-${version}`;
+const cacheLimit = 40;
 const cacheList = [
     '/',
     '/index.html',
@@ -12,6 +13,7 @@ const cacheList = [
     '/js/app.js',
     '/manifest.json',
     '/favicon.png',
+    '/img/logo.png',
     '/img/404.webp',
     '/img/offline.webp',
     '/img/android-chrome-192x192.png',
@@ -53,7 +55,7 @@ self.addEventListener('activate', (ev) => {
     );
 });
 
-self.addEventListener('fetch', (ev) => {
+self.addEventListener("fetch", (ev) => {
     ev.respondWith(
         caches.match(ev.request).then((cacheRes) => {
             return (
@@ -61,30 +63,41 @@ self.addEventListener('fetch', (ev) => {
             fetch(ev.request)
                 .then((fetchRes) => {
                 //TODO: check here for the 404 error
-                if( fetchRes.status > 399)  throw new Error(fetchRes.statusText);
-    
-                return caches.open(dynamicCache).then((cache) => {
+                // Make a third cache for images only
+                if (fetchRes.status > 399) throw new Error(fetchRes.statusText);
+                if (fetchRes.type === "opaque") {
+                    return caches.open(dynamicImgCache).then((cache) => {
+                    let copy = fetchRes.clone(); //make a copy of the response
+                    cache.put(ev.request, copy); //put the copy into the cache
+                    cache.keys().then((key) => {
+                        if (key.length > cacheLimit) {
+                        limitCacheSize(dynamicImgCache);
+                        }
+                    });
+                    return fetchRes; //send the original response back up the chain
+                    });
+                } else {
+                    return caches.open(dynamicCache).then((cache) => {
                     let copy = fetchRes.clone(); //make a copy of the response
                     cache.put(ev.request, copy); //put the copy into the cache
                     return fetchRes; //send the original response back up the chain
-                });
+                    });
+                }
                 })
-                
-                .catch((err) => {
-                    console.log('SW fetch failed');
-                    console.warn(err);
-                    if (ev.request.mode == 'navigate') {
-                        //send the 404 page
-                        return caches.match('/404.html').then((page404Response) => {
-                        return page404Response;
-                        });
-                    }
+                .catch(async (err) => {
+                console.log("SW fetch failed");
+                console.warn(err);
+                if (ev.request.mode == "navigate") {
+                    //send the 404 page
+                    return caches.match("/404.html").then((page404Response) => {
+                    return page404Response;
+                    });
+                }
                 })
             );
         })
     ); //what do we want to send to the browser?
 });
-
 
 function sendMessage(msg) {
     //send a message to the browser
@@ -98,8 +111,18 @@ function sendMessage(msg) {
     });
 }
 
-function limitCache(){
+function limitCacheSize(nm, size = 40) {
     //remove some files from the dynamic cache
+    return caches.open(nm).then((cache) => {
+        return cache.keys().then((keys) => {
+            let numOfKeys = keys.length;
+            if (numOfKeys > size) {
+            return cache.delete(keys[numOfKeys - 1]).then(() => {
+                return limitCacheSize(nm, size);
+            });
+            }
+        });
+        });
 }
 
 function checkForConnection(){

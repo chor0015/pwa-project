@@ -13,12 +13,14 @@ const APP = {
     movieId: null,
     movieTitle: null,
     init: ()=>{
+        console.log('init called')
         //when the page loads
         //open the database
         APP.openDatabase(APP.registerSW); //register the service worker after the DB is open
         
     },
     registerSW: ()=>{
+        console.log('registerSW called')
         //register the service worker
         // COPIED
         if ('serviceWorker' in navigator) {
@@ -34,13 +36,15 @@ const APP = {
             });
         }
         // END COPIED
-        
-        //then add listeners and run page specific code
         APP.pageSpecific();
+        APP.showPastSearches()
         APP.addListeners();
+        //then add listeners and run page specific code
+        
     },
     
     openDatabase: (nextStep)=>{
+        console.log('openDB called')
         //open the database
         let dbOpenRequest = indexedDB.open('movieDB', APP.DBVersion);
 
@@ -83,11 +87,13 @@ const APP = {
     },
     
     createTransaction: (storeName)=>{
+        console.log('createTX called')
         let tx = APP.DB.transaction(storeName, 'readwrite');
         //create a transaction to use for some interaction with the database
         return tx;
     },
     getDBResults: (storeName) => {
+        console.log('getBDresulta called')
         //  //return the results from storeName where it matches keyValue
         //  console.log(keyValue)
         console.log(window.location.search)
@@ -118,7 +124,7 @@ const APP = {
         
 
     addResultsToDB: (obj, storeName)=>{
-        console.log('I GOT TO THE ADD RESULTS TO DB')
+        console.log('addResToDB called')
 
         let store = APP.createTransaction(storeName).objectStore(storeName)
 
@@ -152,6 +158,7 @@ const APP = {
         //save the obj passed in to the appropriate store
     },
     addListeners: ()=>{
+        console.log('add listeners called')
         //add event listeners for DOM
         let searchForm = document.querySelectorAll('#searchForm')
         searchForm.forEach((form) => {
@@ -196,30 +203,40 @@ const APP = {
             // use the APP.deferredPrompt saved event
         });
     },
+    showPastSearches:() => {
+
+    },
 
     pageSpecific:()=>{
+        console.log('pagespecific called')
+        
         APP.input = window.location.href.split("=")[1]
+        console.log('im on page specific')
   
         console.log(APP.input)
         //anything that happens specifically on each page
         if(document.body.id === 'home'){
-            //on the home page
+            
         }
         if(document.body.id === 'results'){
+            console.log('body id is search')
             
             APP.getSearchResults( 'searchStore', APP.input)
             //on the results page
             //listener for clicking on the movie card container 
         }
         if(document.body.id === 'suggest'){
+            console.log('body id is suggest')
             let movieId =  location.href.split("=")[1]
             APP.getSuggestedResults('suggestStore', movieId)
             //on the suggest page
             //listener for clicking on the movie card container 
         }
         if(document.body.id === 'fourohfour'){
+            console.log('body id is suggest')
             //on the 404 page
         }
+        
     },
     changeOnlineStatus: (ev)=>{
         //when the browser goes online or offline
@@ -228,20 +245,17 @@ const APP = {
         navigator.serviceWorker.ready.then((registration) => {
         registration.active.postMessage({ ONLINE: APP.isONLINE});
         });
-
-        APP.changeDisplay();
+        APP.changeDisplay()
     },
 
     changeDisplay: () => {
-        let mainContent = document.querySelector('.main__content')
+        console.log('changeDisplay called')
         let offlineMessage = document.getElementById('offline')
         if (APP.isONLINE) {
             //online
-            mainContent.classList.remove('display-none')
             offlineMessage.classList.add('display-none')
         } else {
             //offline
-            mainContent.classList.add('display-none')
             offlineMessage.classList.remove('display-none')
         }
     },
@@ -259,8 +273,9 @@ const APP = {
     },
 
     searchFormSubmitted: (ev)=>{
+        console.log('searchFormSubmitted called')
         ev.preventDefault();
-    
+        
         APP.input = document.getElementById('search').value;
         if (APP.input) {
             console.log('FORM SUBMITTED TEST')
@@ -270,6 +285,7 @@ const APP = {
         }
     },
     cardListClicked: (ev)=>{
+        console.log('cardClicked called')
         // user clicked on a movie card
         //get the title and movie id
         let movieId = ev.target.closest('.results__card').getAttribute('data-id');
@@ -281,6 +297,7 @@ const APP = {
 
     },
     getData: (storeName)=>{
+        console.log('getDATA called')
         //do a fetch call to the endpoint
         console.log(location.href)
         let url
@@ -296,8 +313,6 @@ const APP = {
             console.log(movieId)
             url = `${APP.tmdbBASEURL}movie/${movieId}/recommendations?api_key=${APP.tmdbAPIKEY}&language=en-US&page=1`
         }
-         
-        
 
         console.log('Fetching...')
         fetch(url)
@@ -328,6 +343,7 @@ const APP = {
     },
     
     getSearchResults:(storeName)=>{
+        console.log('getSearchResults called')
          // //check if online
         // if (APP.isONLINE) {
         //     //online
@@ -339,43 +355,57 @@ const APP = {
         // }
         let searchStore = APP.createTransaction(storeName).objectStore(storeName)
         let req = searchStore.openCursor(APP.input);
+        console.log(APP.input)
             req.onsuccess = function (ev) {
                 let cursor = ev.target.result; 
+                console.log({cursor})
                 //check in DB for match of keyword in searchStore
                 //if no match in DB do a fetch
                 if (cursor) { // key already exist
                     APP.getDBResults(storeName, APP.input)
                     // 
                 } else { // key not exist
-                    console.log('DATA IS NOT IN DB _ getSearchResults TEST')
-                    if (APP.isONLINE) {
 
-                        APP.getData(storeName)
-                    } else {
+                    console.log('DATA IS NOT IN DB _ getSearchResults TEST')
+                    if (!APP.isONLINE) {
+
+                        console.log('APP OFFLINE')
                         APP.changeDisplay()
+                    } else {
+                        
+                        console.log('APP Online')
+                        APP.getData(storeName)
                     }
                 }
             }
         
     },
-    getSuggestedResults:(storeName, movieId)=>{
+    getSuggestedResults:(storeName)=>{
+        console.log('getSuggestResults called')
 
         let suggestStore = APP.createTransaction(storeName).objectStore(storeName)
-        let req = suggestStore.openCursor(movieId);
+        let movieId = location.href.split("=")[1]
+        APP.movieId = movieId
+        let req = suggestStore.openCursor(APP.movieId);
+        
             req.onsuccess = function (ev) {
                 let cursor = ev.target.result; 
                 //check in DB for match of keyword in searchStore
                 //if no match in DB do a fetch
                 if (cursor) { // key already exist
-                    APP.getDBResults(storeName, movieId)
+                    console.log('data exists in Suggest store')
+                    APP.getDBResults(storeName)
                     // 
                 } else { // key not exist
                     console.log('DATA IS NOT IN DB _ getSearchResults TEST')
-                    if (APP.isONLINE) {
+                    if (!APP.isONLINE) {
 
-                        APP.getData(storeName)
-                    } else {
+                        console.log('APP OFFLINE')
                         APP.changeDisplay()
+                    } else {
+                        
+                        console.log('APP Online')
+                        APP.getData(storeName)
                     }
                 }
             }
@@ -386,21 +416,40 @@ const APP = {
     },
 
     displayCards: (results)=>{
+        console.log('displayCards called')
 
         let obj = JSON.stringify(results)
         let DBEntry= JSON.parse(obj)
         let moviesArr = DBEntry.results
 
+        let movieTitle = location.href.split("=")[1]
+        let clickedMovieTitle =  location.href.split("=")[3]
+
+        let noMovies = document.getElementById('noMovies')
+        let resArea = document.getElementById('resultsArea')
+    
         if (moviesArr.length == 0) {
-            console.log('there are no suggested movies')
-             let url = '/404.html'
-             APP.navigate(url)  
+            console.log('there are no movies')
+            resArea.classList.add('display-none')
+            noMovies.classList.remove('display-none')
+            let wrongWord = document.createElement('span')
+            wrongWord.style.color = '#6e57e0'
+            let h2 = document.querySelector("#noMovies > h2")
+            if (document.body.id === 'results'){
+                wrongWord.textContent = ` "${movieTitle.replace(/[\s.;,&?%0-9]/g, ' ')}".`
+            }
+            if ((document.body.id === 'suggest')) {
+                wrongWord.textContent = ` "${clickedMovieTitle.replace(/[\s.;,&?%0-9]/g, ' ')}".`
+            }
+            
+            h2.append(wrongWord)
+            
         } else { 
             console.log(moviesArr)
-
-            let movieTitle = location.href.split("=")[1]
-            let clickedMovieTitle =  location.href.split("=")[3]
-
+            resArea.classList.remove('display-none')
+            noMovies.classList.add('display-none')
+            
+            
 
             if (document.body.id === 'results'){
                 console.log('BUILDING CARD FOR RESULTS')
@@ -444,7 +493,7 @@ const APP = {
                                 movieInfoText.setAttribute('id', 'movieInfoText')
                                 movieInfoText.classList.add('movie__info-text')
                                     let h3 = document.createElement('h3')
-                                    h3.textContent = `Title: ${movie.title}`
+                                    h3.textContent = `${movie.title}`
                                     let pYear = document.createElement('p')
                                     if(movie.release_date) {
                                         pYear.textContent =`Release year: ${movie.release_date.slice(0,4)}`
@@ -467,13 +516,10 @@ const APP = {
             resultsContent.append(df)
 
             APP.addListeners()
-         } 
-
-        //display all the movie cards based on the results array
-        // in APP.results
-        //these results could be from the database or from a fetch
+        } 
     },
     navigate: (url, movieTitle)=>{
+        console.log('navigate called')
         //change the current page
 
         if (url==='/404.html') {
@@ -481,8 +527,7 @@ const APP = {
             console.log('NAVIGATED to 404')
         } else {
             window.location = url
-            console.log('NAVIGATED')
-            APP.pageSpecific() 
+            console.log(`NAVIGATED ${url}`) 
         }
     }
 
