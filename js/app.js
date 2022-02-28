@@ -239,6 +239,7 @@ const APP = {
             let keyword = object.keyword.replace(/[\s.;,&?%0-9]/g, ' ')
             let p = document.createElement('p')
             p.setAttribute('data-id', keyword)
+            p.setAttribute('tabindex', '0')
             p.classList.add('searchword')
             p.textContent = keyword
             df.append(p)
@@ -292,6 +293,8 @@ const APP = {
             let url = `/results.html?keyword=${APP.input}`
             
             APP.navigate(url)
+        } else {
+            alert("Please, enter a keyword to start a search")
         }
     },
 
