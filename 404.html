@@ -11,7 +11,7 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 </head>
 <body id="error">
-    <header>
+    <header id="header">
         <div class="header header__container container">
             <h1>
                 <a href="/"><img src="./img/logo.png" class="header__logo" alt=""></a>
@@ -37,11 +37,10 @@
                 
                 <!-- <div style="width:100%;height:0;padding-bottom:100%;position:relative;"><iframe src="https://giphy.com/embed/vtm4qejJIl1ERPIrbA" width="100%" height="100%" style="position:absolute" frameBorder="0" class="giphy-embed" allowFullScreen></iframe></div><p><a href="https://giphy.com/gifs/knife-crab-pikaole-vtm4qejJIl1ERPIrbA"></a></p> -->
         </section>
-        <section class="container error__container display-none" id="offline">
-            <p>Hmm...I noticed you're offline. You can keep using the app but do not search for anything new. Otherwise you'll see a sad crab. It doesn't bite, though.</p>
-        </section>
-        <section class="conatiner pastsearches__container" id="pastSearches">
-            <h3 class="subtitle">Here's a list of your past searches: </h3>
+        <section class="pastsearches__container" >
+            <div class="pastsearches__content" id="pastSearches">
+
+            </div>
         </section>
     </main>
     <footer>

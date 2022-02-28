@@ -17,23 +17,6 @@ const APP = {
         APP.openDatabase(APP.registerSW); //register the service worker after the DB is open
         
     },
-
-    registerSW: ()=>{
-        console.log('registerSW called')
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/sw.js').catch(function (err) {
-              // Something went wrong during registration. The sw.js file
-              // might be unavailable or contain a syntax error.
-                console.warn(err);
-            });
-            navigator.serviceWorker.ready.then((registration) => {
-                
-            });
-        }
-
-        APP.pageSpecific();
-        APP.addListeners();
-    },
     
     openDatabase: (nextStep)=>{
         console.log('openDB called')
@@ -76,6 +59,92 @@ const APP = {
             nextStep()
         };
     },
+
+    registerSW: ()=>{
+        console.log('registerSW called')
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js').catch(function (err) {
+              // Something went wrong during registration. The sw.js file
+              // might be unavailable or contain a syntax error.
+                console.warn(err);
+            });
+            navigator.serviceWorker.ready.then((registration) => {
+                
+            });
+        }
+
+        APP.pageSpecific();
+        APP.addListeners();
+    },
+
+    addListeners: (ev)=>{
+        console.log('add listeners called')
+        let searchForm = document.querySelectorAll('#searchForm')
+        searchForm.forEach((form) => {
+            form.addEventListener('submit', APP.searchFormSubmitted)
+        })
+
+        if(document.body.id === 'results' || document.body.id === 'suggest'){
+            let cards = document.querySelectorAll('.results__card')
+            cards.forEach((card) => {
+                card.addEventListener('click', APP.cardListClicked)
+            })
+        }
+
+        //check if already installed
+        if (navigator.standalone) {
+            console.log('Launched: Installed (iOS)');
+            APP.isStandalone = true;
+        } else if (matchMedia('(display-mode: standalone)').matches) {
+            console.log('Launched: Installed');
+            APP.isStandalone = true;
+        } else {
+            // console.log('Launched: Browser Tab');
+            APP.isStandalone = false;
+        }
+    
+        //add event listeners for online and offline
+        window.addEventListener('online', APP.changeOnlineStatus);
+        window.addEventListener('offline', APP.changeOnlineStatus); 
+    
+        //add listener for install event
+        window.addEventListener('beforeinstallprompt', (ev) => {
+            // Prevent the mini-infobar from appearing on mobile
+            ev.preventDefault();
+            // Save the event in a global property
+            // so that it can be triggered later.
+            APP.deferredPrompt = ev;
+            console.log('deferredPrompt saved');
+            // Build your own enhanced install experience
+            // use the APP.deferredPrompt saved event
+        });
+    },
+
+    pageSpecific:()=>{
+        console.log('pagespecific called')
+        
+        APP.input = window.location.href.split("=")[1]
+
+        //anything that happens specifically on each page
+        if(document.body.id === 'home'){
+            APP.getPastSearches()
+        }
+
+        if(document.body.id === 'results'){
+            APP.getSearchResults( 'searchStore', APP.input)
+            //on the results page
+            //listener for clicking on the movie card container 
+        }
+        if(document.body.id === 'suggest'){
+            let movieId =  location.href.split("=")[1]
+            APP.getSuggestedResults('suggestStore', movieId)
+            //on the suggest page
+            //listener for clicking on the movie card container 
+        }
+        if(document.body.id === 'error'){
+            APP.getPastSearches()
+        } 
+    },
     
     createTransaction: (storeName)=>{
         console.log('createTX called')
@@ -83,6 +152,7 @@ const APP = {
         //create a transaction to use for some interaction with the database
         return tx;
     },
+
     getDBResults: (storeName) => {
         console.log('getBDresults called')
         
@@ -143,53 +213,8 @@ const APP = {
         };
     },
 
-    addListeners: ()=>{
-        console.log('add listeners called')
-        let searchForm = document.querySelectorAll('#searchForm')
-        searchForm.forEach((form) => {
-            form.addEventListener('submit', APP.searchFormSubmitted)
-        })
-        
-
-        if(document.body.id === 'results' || document.body.id === 'suggest'){
-            let cards = document.querySelectorAll('.results__card')
-            cards.forEach((card) => {
-                card.addEventListener('click', APP.cardListClicked)
-            })
-        }
-
-        //check if already installed
-        if (navigator.standalone) {
-            console.log('Launched: Installed (iOS)');
-            APP.isStandalone = true;
-        } else if (matchMedia('(display-mode: standalone)').matches) {
-            console.log('Launched: Installed');
-            APP.isStandalone = true;
-        } else {
-            // console.log('Launched: Browser Tab');
-            APP.isStandalone = false;
-        }
-    
-        //add event listeners for online and offline
-        window.addEventListener('online', APP.changeOnlineStatus);
-        window.addEventListener('offline', APP.changeOnlineStatus);
-       
-    
-        //add listener for install event
-        window.addEventListener('beforeinstallprompt', (ev) => {
-            // Prevent the mini-infobar from appearing on mobile
-            ev.preventDefault();
-            // Save the event in a global property
-            // so that it can be triggered later.
-            APP.deferredPrompt = ev;
-            console.log('deferredPrompt saved');
-            // Build your own enhanced install experience
-            // use the APP.deferredPrompt saved event
-        });
-    },
-
     getPastSearches:() => {
-        let store = APP.createTransaction('searchStore').objectStore('searchStore')
+        let store = APP.createTransaction('searchStore').objectStore('searchStore') 
 
         let getRequest = store.getAll()
 
@@ -211,40 +236,27 @@ const APP = {
         let df = document.createDocumentFragment()
 
         objects.forEach((object) => {
-            let keyword = object.keyword
-            let li = document.createElement('li')
-            li.textContent = keyword
-            df.append(li)
+            let keyword = object.keyword.replace(/[\s.;,&?%0-9]/g, ' ')
+            let p = document.createElement('p')
+            p.setAttribute('data-id', keyword)
+            p.classList.add('searchword')
+            p.textContent = keyword
+            df.append(p)
         })
 
         pastSearch.append(df)
+
+        let keywords = document.querySelectorAll('#pastSearches > p')
+        console.log(keywords)
+        keywords.forEach((keyword) => {
+            keyword.addEventListener('click', APP.pastSearchClicked)
+        })
     },
 
-    pageSpecific:()=>{
-        console.log('pagespecific called')
-        
-        APP.input = window.location.href.split("=")[1]
-
-        //anything that happens specifically on each page
-        if(document.body.id === 'home'){
-            APP.getPastSearches()
-        }
-
-        if(document.body.id === 'results'){
-            APP.getSearchResults( 'searchStore', APP.input)
-            //on the results page
-            //listener for clicking on the movie card container 
-        }
-        if(document.body.id === 'suggest'){
-            let movieId =  location.href.split("=")[1]
-            APP.getSuggestedResults('suggestStore', movieId)
-            //on the suggest page
-            //listener for clicking on the movie card container 
-        }
-        if(document.body.id === 'fourohfour'){
-            //on the 404 page
-        }
-        
+    pastSearchClicked: (ev) => {
+        let keyword = ev.target.closest('p').getAttribute('data-id')
+        let url = `/results.html?keyword=${keyword}`
+        APP.navigate(url)
     },
 
     changeOnlineStatus: (ev)=>{
@@ -268,13 +280,6 @@ const APP = {
             //offline
             offlineMessage.classList.remove('display-none')
         }
-    },
-
-    sendMessage: (msg) => {
-        //send messages to the service worker
-        navigator.serviceWorker.ready.then((registration) => {
-            registration.active.postMessage(msg);
-        });
     },
 
     searchFormSubmitted: (ev)=>{

@@ -1,5 +1,5 @@
 {
-    "name": "Suggest-A-Movie",
+    "name": "Suggesta",
     "short_name": "Suggesta",
     "description": "This app suggests movies using TMDB API",
     "icons": [

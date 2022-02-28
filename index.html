@@ -14,7 +14,7 @@
     <link rel="manifest" href="/manifest.json">
 </head>
 <body id="home">
-    <header>
+    <header id="header">
         <div class="header header__container container">
             <h1>
                 <a href="/"><img src="./img/logo.png" class="header__logo" alt=""></a>
@@ -44,11 +44,11 @@
         <section class="container error__container display-none" id="offline">
             <p>Hmm...I noticed you're offline. You can keep using the app but do not search for anything new. Otherwise you'll see a sad crab. It doesn't bite, though.</p>
         </section>
-        <section class="container pastsearches__container" >
+        <section class="pastsearches__container" >
             <h3 class="subtitle">Here's a list of your past searches: </h3>
-            <ol class="pastsearches__content" id="pastSearches">
+            <div class="pastsearches__content" id="pastSearches">
 
-            </ol>
+            </div>
         </section>
     </main>
     <footer>
