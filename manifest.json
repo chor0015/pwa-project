@@ -9,11 +9,6 @@
             "type": "image/webp"
         },
         {
-            "src": "/img/offline.webp",
-            "sizes": "480x480",
-            "type": "image/webp"
-        },
-        {
             "src": "/favicon.png",
             "sizes": "512x512",
             "type": "image/png"

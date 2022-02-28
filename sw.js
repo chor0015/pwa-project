@@ -15,7 +15,6 @@ const cacheList = [
     '/favicon.png',
     '/img/logo.png',
     '/img/404.webp',
-    '/img/offline.webp',
     '/img/android-chrome-192x192.png',
     '/img/android-chrome-512x512.png',
     '/img/apple-touch-icon.png',
