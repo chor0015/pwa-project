@@ -25,7 +25,6 @@ const APP = {
 
         //add the update, error, success listeners in here
         dbOpenRequest.onupgradeneeded = function (ev) {
-            console.log('upgrade needed')
             APP.DB = ev.target.result;
 
             try {
@@ -43,17 +42,12 @@ const APP = {
         }
         
         dbOpenRequest.onerror = function (err) {
-            console.log(err.message);
          //an error has happened during opening
         };
 
         dbOpenRequest.onsuccess = function (ev) {
             APP.DB = dbOpenRequest.result;
-            //or ev.target.result
-            //result will be the reference to the database that you will use
-            console.log(APP.DB.name);
-            console.log(APP.DB.version);
-            console.log(APP.DB.objectStoreNames);
+
             console.log(APP.DB.name, `is ready to be used.`); 
             //call nextStep onsuccess
             nextStep()
@@ -90,34 +84,11 @@ const APP = {
                 card.addEventListener('click', APP.cardListClicked)
             })
         }
-
-        //check if already installed
-        if (navigator.standalone) {
-            console.log('Launched: Installed (iOS)');
-            APP.isStandalone = true;
-        } else if (matchMedia('(display-mode: standalone)').matches) {
-            console.log('Launched: Installed');
-            APP.isStandalone = true;
-        } else {
-            // console.log('Launched: Browser Tab');
-            APP.isStandalone = false;
-        }
     
         //add event listeners for online and offline
         window.addEventListener('online', APP.changeOnlineStatus);
         window.addEventListener('offline', APP.changeOnlineStatus); 
     
-        //add listener for install event
-        window.addEventListener('beforeinstallprompt', (ev) => {
-            // Prevent the mini-infobar from appearing on mobile
-            ev.preventDefault();
-            // Save the event in a global property
-            // so that it can be triggered later.
-            APP.deferredPrompt = ev;
-            console.log('deferredPrompt saved');
-            // Build your own enhanced install experience
-            // use the APP.deferredPrompt saved event
-        });
     },
 
     pageSpecific:()=>{
@@ -125,22 +96,19 @@ const APP = {
         
         APP.input = window.location.href.split("=")[1]
 
-        //anything that happens specifically on each page
         if(document.body.id === 'home'){
             APP.getPastSearches()
         }
 
         if(document.body.id === 'results'){
             APP.getSearchResults( 'searchStore', APP.input)
-            //on the results page
-            //listener for clicking on the movie card container 
         }
+
         if(document.body.id === 'suggest'){
             let movieId =  location.href.split("=")[1]
             APP.getSuggestedResults('suggestStore', movieId)
-            //on the suggest page
-            //listener for clicking on the movie card container 
         }
+
         if(document.body.id === 'error'){
             APP.getPastSearches()
         } 
@@ -149,7 +117,6 @@ const APP = {
     createTransaction: (storeName)=>{
         console.log('createTX called')
         let tx = APP.DB.transaction(storeName, 'readwrite');
-        //create a transaction to use for some interaction with the database
         return tx;
     },
 
@@ -208,7 +175,7 @@ const APP = {
             console.log(err)
         };
         addReq.onsuccess = (ev) => {
-            console.log('DATA ADDED TO DB _ addResultsToDB TEST')
+            console.log('DATA ADDED TO DB')
             APP.getDBResults(storeName)
         };
     },
@@ -224,7 +191,7 @@ const APP = {
 
         getRequest.onsuccess = (ev) => {
                 
-            console.log('GOT ALL RESULTS')
+            console.log('GOT RESULTS FROM DB')
             let objects = getRequest.result;
 
             APP.buildPastSearches(objects)
@@ -248,7 +215,6 @@ const APP = {
         pastSearch.append(df)
 
         let keywords = document.querySelectorAll('#pastSearches > p')
-        console.log(keywords)
         keywords.forEach((keyword) => {
             keyword.addEventListener('click', APP.pastSearchClicked)
         })
@@ -309,7 +275,7 @@ const APP = {
     },
 
     getData: (storeName)=>{
-        console.log('getDATA called')
+        console.log('getData called')
         //do a fetch call to the endpoint
         let url
         
@@ -321,7 +287,6 @@ const APP = {
             let movieId = location.href.split("=")[1]
             APP.movieId = movieId
 
-            console.log(movieId)
             url = `${APP.tmdbBASEURL}movie/${movieId}/recommendations?api_key=${APP.tmdbAPIKEY}&language=en-US&page=1`
         }
 
@@ -335,7 +300,7 @@ const APP = {
             })
 
             .then(contents=>{
-                console.log('FETCH SUCCSESSFUL')
+                console.log('FETCH SUCCESSFUL')
                 let results = contents.results;
                 //remove the properties we don't need
                 let newResults = results.map(({adult, backdrop_path, genre_ids, original_title, video, vote_count,...rest}) => rest)              
@@ -343,7 +308,6 @@ const APP = {
                 //save the updated results to APP.results
                 APP.results = newResults
                     
-                console.log(`${APP.results} AFTER FETCH`)
                 // call the callback
                 APP.addResultsToDB(APP.results, storeName )
             })
@@ -367,7 +331,7 @@ const APP = {
                     APP.getDBResults(storeName, APP.input)
                     // 
                 } else { // key not exist
-                    console.log('DATA IS NOT IN DB _ getSearchResults TEST')
+                    console.log('DATA IS NOT IN DB')
                     if (!APP.isONLINE) {
                         console.log('APP OFFLINE')
                     } else {
@@ -393,7 +357,7 @@ const APP = {
                     APP.getDBResults(storeName)
                     // 
                 } else { // key not exist
-                    console.log('DATA IS NOT IN DB _ getSearchResults TEST')
+                    console.log('DATA IS NOT IN DB')
                     if (!APP.isONLINE) {
                         console.log('APP OFFLINE')
                     } else {
@@ -515,14 +479,7 @@ const APP = {
     navigate: (url)=>{
         console.log('navigate called')
         //change the current page
-
-        if (url==='/404.html') {
-            window.location = url
-            console.log('NAVIGATED to 404')
-        } else {
-            window.location = url
-            console.log(`NAVIGATED ${url}`) 
-        }
+        window.location = url
     }
 }
 
