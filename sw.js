@@ -13,7 +13,7 @@ const cacheList = [
     '/js/app.js',
     '/manifest.json',
     '/favicon.ico',
-    '/tmdb-logo.svg',
+    '/img/tmdb-logo.svg',
     '/img/logo.png',
     '/img/404.webp',
     '/img/android-chrome-192x192.png',
