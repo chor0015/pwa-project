@@ -89,7 +89,7 @@ self.addEventListener("fetch", (ev) => {
                 console.warn(err);
                 if (ev.request.mode == "navigate") {
                     //send the 404 page
-                    return caches.match("./404.html").then((page404Response) => {
+                    return caches.match("/404.html").then((page404Response) => {
                     return page404Response;
                     });
                 }
