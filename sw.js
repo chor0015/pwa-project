@@ -4,24 +4,24 @@ const dynamicCache = `PWA-Dynamic-Movie-APP-${version}`;
 const dynamicImgCache = `PWA-Dynamic-Img-Movie-APP-${version}`;
 const cacheLimit = 40;
 const cacheList = [
-    '/',
-    '/index.html',
-    '/404.html',
-    '/results.html',
-    '/suggested.html',
-    '/css/main.css',
-    '/js/app.js',
-    '/manifest.json',
-    '/favicon.ico',
-    '/tmdb-logo.svg',
-    '/img/logo.png',
-    '/img/404.webp',
-    '/img/android-chrome-192x192.png',
-    '/img/android-chrome-512x512.png',
-    '/img/apple-touch-icon.png',
-    '/img/favicon-16x16.png',
-    '/img/favicon-32x32.png',
-    '/img/placeholder-img.png',
+    './',
+    './index.html',
+    './404.html',
+    './results.html',
+    './suggested.html',
+    './css/main.css',
+    './js/app.js',
+    './manifest.json',
+    './favicon.ico',
+    './tmdb-logo.svg',
+    './img/logo.png',
+    './img/404.webp',
+    './img/android-chrome-192x192.png',
+    './img/android-chrome-512x512.png',
+    './img/apple-touch-icon.png',
+    './img/favicon-16x16.png',
+    './img/favicon-32x32.png',
+    './img/placeholder-img.png',
     'https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap',
     'https://fonts.googleapis.com/icon?family=Material+Icons'
 ];
@@ -89,7 +89,7 @@ self.addEventListener("fetch", (ev) => {
                 console.warn(err);
                 if (ev.request.mode == "navigate") {
                     //send the 404 page
-                    return caches.match("/404.html").then((page404Response) => {
+                    return caches.match("./404.html").then((page404Response) => {
                     return page404Response;
                     });
                 }

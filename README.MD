@@ -8,7 +8,7 @@
 
 You can use a list of past searches to navigate the app, while being offline. 
 
-## [DEMO](https://pages.github.com/) &nbsp; :arrow_right:
+## [DEMO]() &nbsp; :arrow_right:
 
 ![This is an image](./img/pwa.gif)
 

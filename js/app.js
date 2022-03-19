@@ -57,7 +57,7 @@ const APP = {
     registerSW: ()=>{
         console.log('registerSW called')
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/sw.js').catch(function (err) {
+            navigator.serviceWorker.register('./sw.js').catch(function (err) {
               // Something went wrong during registration. The sw.js file
               // might be unavailable or contain a syntax error.
                 console.warn(err);
@@ -222,7 +222,7 @@ const APP = {
 
     pastSearchClicked: (ev) => {
         let keyword = ev.target.closest('p').getAttribute('data-id')
-        let url = `/results.html?keyword=${keyword}`
+        let url = `./results.html?keyword=${keyword}`
         APP.navigate(url)
     },
 
@@ -256,7 +256,7 @@ const APP = {
         APP.input = document.getElementById('search').value;
         if (APP.input) {
             console.log('FORM SUBMITTED')
-            let url = `/results.html?keyword=${APP.input}`
+            let url = `./results.html?keyword=${APP.input}`
             
             APP.navigate(url)
         } else {
@@ -270,7 +270,7 @@ const APP = {
         let movieId = ev.target.closest('.results__card').getAttribute('data-id');
         let movieTitle = ev.target.closest('.results__card').getAttribute('data-title')
 
-        let url = `/suggested.html?movieid=${movieId}=movietitle=${movieTitle}`
+        let url = `./suggested.html?movieid=${movieId}=movietitle=${movieTitle}`
         APP.navigate(url, movieTitle)
     },
 
