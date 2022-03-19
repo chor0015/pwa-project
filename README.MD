@@ -8,7 +8,7 @@
 
 You can use a list of past searches to navigate the app, while being offline. 
 
-## [DEMO]() &nbsp; :arrow_right:
+## [DEMO](https://goofy-jackson-6ad5bb.netlify.app/) &nbsp; :arrow_right:
 
 ![This is an image](./img/pwa.gif)
 
